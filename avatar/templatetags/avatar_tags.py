@@ -42,6 +42,8 @@ def avatar(user, size=settings.AVATAR_DEFAULT_SIZE, **kwargs):
     else:
         alt = six.text_type(user)
         url = avatar_url(user, size)
+    if url[:1] == '<':
+        return url
     context = {
         'user': user,
         'url': url,
