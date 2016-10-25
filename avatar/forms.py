@@ -81,6 +81,6 @@ class DeleteAvatarForm(forms.Form):
         avatars = kwargs.pop('avatars')
         super(DeleteAvatarForm, self).__init__(*args, **kwargs)
         choices = [(avatar.id, avatar_img(avatar, size)) for avatar in avatars]
-        self.fields['choices'] = forms.MultipleChoiceField(label=_("Choices"),
-                                                           choices=choices,
-                                                           widget=widgets.CheckboxSelectMultiple)
+        self.fields['choice'] = forms.MultipleChoiceField(label=_("Choices"),
+                                                          choices=choices,
+                                                          widget=widgets.CheckboxSelectMultiple)

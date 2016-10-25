@@ -89,6 +89,10 @@ def add(request, extra_context=None, next_override=None,
 def change(request, extra_context=None, next_override=None,
            upload_form=UploadAvatarForm, primary_form=PrimaryAvatarForm,
            *args, **kwargs):
+    if request.POST.get('action') == 'delete':
+        return delete(request, extra_context=extra_context,
+                      next_override=next_override, *args, **kwargs)
+
     if extra_context is None:
         extra_context = {}
     avatar, avatars = _get_avatars(request.user)
@@ -136,7 +140,7 @@ def delete(request, extra_context=None, next_override=None, *args, **kwargs):
                                           avatars=avatars)
     if request.method == 'POST':
         if delete_avatar_form.is_valid():
-            ids = delete_avatar_form.cleaned_data['choices']
+            ids = delete_avatar_form.cleaned_data['choice']
             if six.text_type(avatar.id) in ids and avatars.count() > len(ids):
                 # Find the next best avatar, and set it as the new primary
                 for a in avatars:
