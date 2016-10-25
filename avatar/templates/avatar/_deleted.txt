@@ -1,0 +1,1 @@
+{% load i18n %}{% trans "Successfully deleted the requested avatars." %}

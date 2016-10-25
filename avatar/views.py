@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.template.loader import render_to_string
 
 from avatar.conf import settings
 from avatar.forms import PrimaryAvatarForm, DeleteAvatarForm, UploadAvatarForm
@@ -70,7 +71,7 @@ def add(request, extra_context=None, next_override=None,
             image_file = request.FILES['avatar']
             avatar.avatar.save(image_file.name, image_file)
             avatar.save()
-            messages.success(request, _("Successfully uploaded a new avatar."))
+            messages.success(request, render_to_string('avatar/_uploaded.txt'))
             avatar_updated.send(sender=Avatar, user=request.user, avatar=avatar)
             return redirect(next_override or _get_next(request))
     context = {
@@ -108,7 +109,7 @@ def change(request, extra_context=None, next_override=None,
             avatar.save()
             updated = True
             invalidate_cache(request.user)
-            messages.success(request, _("Successfully updated your avatar."))
+            messages.success(request, render_to_string('avatar/_updated.txt'))
         if updated:
             avatar_updated.send(sender=Avatar, user=request.user, avatar=avatar)
         return redirect(next_override or _get_next(request))
@@ -146,8 +147,7 @@ def delete(request, extra_context=None, next_override=None, *args, **kwargs):
                                             avatar=avatar)
                         break
             Avatar.objects.filter(id__in=ids).delete()
-            messages.success(request,
-                             _("Successfully deleted the requested avatars."))
+            messages.success(request, render_to_string('avatar/_deleted.txt'))
             return redirect(next_override or _get_next(request))
 
     context = {
