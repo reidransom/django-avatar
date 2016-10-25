@@ -42,16 +42,23 @@ def avatar(user, size=settings.AVATAR_DEFAULT_SIZE, **kwargs):
     else:
         alt = six.text_type(user)
         url = avatar_url(user, size)
-    if url[:1] == '<':
-        return url
+
     context = {
         'user': user,
-        'url': url,
         'alt': alt,
         'size': size,
         'kwargs': kwargs,
     }
-    return render_to_string('avatar/avatar_tag.html', context)
+    template_name = 'avatar/avatar_tag.html'
+    ext_context = None
+    try:
+        template_name, ext_context = url
+    except ValueError:
+        context['url'] = url
+    if ext_context:
+        context = dict(context, **ext_context)
+
+    return render_to_string(template_name, context)
 
 
 @register.filter
