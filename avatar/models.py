@@ -5,6 +5,7 @@ import hashlib
 from PIL import Image
 
 from django.db import models
+from django.db.models import Max, Case, When, Value
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.files.storage import get_storage_class
@@ -173,6 +174,31 @@ def remove_avatar_images(instance=None, **kwargs):
         if instance.thumbnail_exists(size):
             instance.avatar.storage.delete(instance.avatar_name(size))
     instance.avatar.storage.delete(instance.avatar.name)
+
+
+def annotate_primary_avatar(user_queryset):
+    """ Annotate the primary_avatar attribute for Users in this queryset.
+
+    This will accomplish in bulk what avatar.utils.get_primary_avatar does for individual
+    User objects.
+    """
+    qset = user_queryset
+    qset = qset.annotate(primary_avatar=Max(Case(
+        When(avatar__primary=True, then='avatar')
+    )))
+    qset = qset.annotate(nonprimary_avatar=Max('avatar'))
+    avatar_map = {}
+    avatar_pks = []
+    for user in qset:
+        if user.primary_avatar is None and user.nonprimary_avatar is not None:
+            user.primary_avatar = user.nonprimary_avatar
+        if user.primary_avatar is not None:
+            avatar_map[user.pk] = user
+            avatar_pks.append(user.primary_avatar)
+    avatar_list = Avatar.objects.filter(pk__in=avatar_pks)
+    for avatar in avatar_list:
+        avatar_map[avatar.user_id].primary_avatar = avatar
+    return qset
 
 
 signals.post_save.connect(create_default_thumbnails, sender=Avatar)

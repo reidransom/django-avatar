@@ -109,14 +109,19 @@ def get_primary_avatar(user, size=settings.AVATAR_DEFAULT_SIZE):
             user = get_user(user)
         except User.DoesNotExist:
             return None
+
     try:
-        # Order by -primary first; this means if a primary=True avatar exists
-        # it will be first, and then ordered by date uploaded, otherwise a
-        # primary=False avatar will be first.  Exactly the fallback behavior we
-        # want.
-        avatar = user.avatar_set.order_by("-primary", "-date_uploaded")[0]
-    except IndexError:
-        avatar = None
+        avatar = user.primary_avatar
+    except AttributeError:
+        try:
+            # Order by -primary first; this means if a primary=True avatar exists
+            # it will be first, and then ordered by date uploaded, otherwise a
+            # primary=False avatar will be first.  Exactly the fallback behavior we
+            # want.
+            avatar = user.avatar_set.order_by("-primary", "-date_uploaded")[0]
+        except IndexError:
+            avatar = None
+
     if avatar:
         if not avatar.thumbnail_exists(size):
             avatar.create_thumbnail(size)
