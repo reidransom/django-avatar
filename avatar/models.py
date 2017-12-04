@@ -2,7 +2,7 @@ import binascii
 import datetime
 import os
 import hashlib
-from PIL import Image
+from PIL import Image, ExifTags
 
 from django.db import models
 from django.db.models import Max, Case, When, Value
@@ -122,6 +122,18 @@ class Avatar(models.Model):
         try:
             orig = self.avatar.storage.open(self.avatar.name, 'rb')
             image = Image.open(orig)
+
+            for orientation in ExifTags.TAGS.keys() :
+                if ExifTags.TAGS[orientation] == 'Orientation':
+                    break
+            exif = dict(image._getexif().items())
+            if exif[orientation] == 3:
+                image=image.rotate(180, expand=True)
+            elif exif[orientation] == 6:
+                image=image.rotate(270, expand=True)
+            elif exif[orientation] == 8:
+                image=image.rotate(90, expand=True)
+
             quality = quality or settings.AVATAR_THUMB_QUALITY
             w, h = image.size
             if w != size or h != size:
