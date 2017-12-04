@@ -126,13 +126,18 @@ class Avatar(models.Model):
             for orientation in ExifTags.TAGS.keys() :
                 if ExifTags.TAGS[orientation] == 'Orientation':
                     break
-            exif = dict(image._getexif().items())
-            if exif[orientation] == 3:
-                image=image.rotate(180, expand=True)
-            elif exif[orientation] == 6:
-                image=image.rotate(270, expand=True)
-            elif exif[orientation] == 8:
-                image=image.rotate(90, expand=True)
+
+            try:
+                exif = dict(image._getexif().items())
+            except AttributeError:
+                pass
+            else:
+                if exif[orientation] == 3:
+                    image=image.rotate(180, expand=True)
+                elif exif[orientation] == 6:
+                    image=image.rotate(270, expand=True)
+                elif exif[orientation] == 8:
+                    image=image.rotate(90, expand=True)
 
             quality = quality or settings.AVATAR_THUMB_QUALITY
             w, h = image.size
