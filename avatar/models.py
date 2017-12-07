@@ -122,23 +122,7 @@ class Avatar(models.Model):
         try:
             orig = self.avatar.storage.open(self.avatar.name, 'rb')
             image = Image.open(orig)
-
-            for orientation in ExifTags.TAGS.keys() :
-                if ExifTags.TAGS[orientation] == 'Orientation':
-                    break
-
-            try:
-                exif = dict(image._getexif().items())
-            except AttributeError:
-                pass
-            else:
-                if exif[orientation] == 3:
-                    image=image.rotate(180, expand=True)
-                elif exif[orientation] == 6:
-                    image=image.rotate(270, expand=True)
-                elif exif[orientation] == 8:
-                    image=image.rotate(90, expand=True)
-
+            image = self.exif_rotate(image)
             quality = quality or settings.AVATAR_THUMB_QUALITY
             w, h = image.size
             if w != size or h != size:
@@ -158,6 +142,27 @@ class Avatar(models.Model):
             thumb = self.avatar.storage.save(self.avatar_name(size), thumb_file)
         except IOError:
             return  # What should we do here?  Render a "sorry, didn't work" img?
+
+    def exif_rotate(self, image):
+        for orientation in ExifTags.TAGS.keys() :
+            if ExifTags.TAGS[orientation] == 'Orientation':
+                break
+
+        try:
+            exif = dict(image._getexif().items())
+        except AttributeError:
+            return image
+        try:
+            if exif[orientation] == 3:
+                image=image.rotate(180, expand=True)
+            elif exif[orientation] == 6:
+                image=image.rotate(270, expand=True)
+            elif exif[orientation] == 8:
+                image=image.rotate(90, expand=True)
+        except KeyError:
+            return image
+
+        return image
 
     def avatar_url(self, size):
         return self.avatar.storage.url(self.avatar_name(size))
